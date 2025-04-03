@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blend Details</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-image: url('blend.jpeg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: #333;
+        }
+        h2 {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #e0f7fa;
+        }
+        .blend-input-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+        label {
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            width: fit-content;
+            margin-right: 10px;
+        }
+        input[type="number"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 80px;
+        }
+        .back-button {
+            margin-top: 20px;
+            padding: 12px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: block;
+            margin: 20px auto;
+        }
+        .back-button:hover {
+            background-color: #45a049;
+        }
+        #results {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            margin: 30px auto;
+            border-radius: 8px;
+            width: 80%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+        #bean-checkboxes {
+            margin: 20px auto;
+            width: 80%;
+            text-align: center;
+        }
+        #bean-checkboxes label {
+            display: inline-block;
+            margin: 5px 15px;
+            background: none;
+            padding: 0;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+        #bean-checkboxes input[type="checkbox"] {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h2>COFFEE REGIONS</h2>
+
+    <div id="bean-checkboxes"></div>
+
+    <div class="blend-input-container">
+        <label for="blend-count">Number of Beans to Blend (2-6):</label>
+        <input type="number" id="blend-count" value="2" min="2" max="6">
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Bean Type</th>
+                <th>Combined Demand</th>
+                <th>Batches</th>
+                <th>No. of Batches</th>
+            </tr>
+        </thead>
+        <tbody id="blend-table-body"></tbody>
+    </table>
+
+    <button class="back-button" onclick="sendDecrementData()">BACK TO INVENTORY</button>
+
+    <div id="results"></div>
+
+    <script>
+        let beanData = JSON.parse(sessionStorage.getItem("beanData")) || {};
+        const batchNumber = parseFloat(sessionStorage.getItem("batchNumber")) || 1;
+
+        function populateBeanCheckboxes() {
+            const checkboxesDiv = document.getElementById("bean-checkboxes");
+            Object.keys(beanData).forEach(bean => {
+                const label = document.createElement("label");
+                label.innerHTML = `<input type="checkbox" name="beans" value="${bean}" onchange="updateCombinedDemand('${bean}')"> ${bean} <br>`;
+                checkboxesDiv.appendChild(label);
+            });
+        }
+
+        function populateBlendTable() {
+            let tableBody = document.getElementById("blend-table-body");
+            tableBody.innerHTML = "";
+
+            Object.keys(beanData).forEach(bean => {
+                let randomBatches = Math.floor(Math.random() * 100) + 1;
+                let finalBatches = randomBatches / batchNumber;
+                let combinedDemand = beanData[bean].combinedDemand;
+
+                let row = `<tr>
+                    <td>${bean}</td>
+                    <td>${combinedDemand}</td>
+                    <td>${randomBatches}</td>
+                    <td>${finalBatches.toFixed(2)}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        function updateCombinedDemand(bean) {
+            const selectedBeans = Array.from(document.querySelectorAll('input[name="beans"]:checked'))
+                .map(checkbox => checkbox.value);
+            const blendCount = parseInt(document.getElementById("blend-count").value) || 2;
+
+            if (selectedBeans.length < 2 || selectedBeans.length > 6) {
+                alert("Please select between 2 and 6 beans.");
+            } else {
+                selectedBeans.forEach(selectedBean => {
+                    beanData[selectedBean].combinedDemand = beanData[selectedBean].combinedDemand - blendCount;
+                });
+                populateBlendTable();
+                sessionStorage.setItem("beanData", JSON.stringify(beanData));
+            }
+        }
+
+        function sendDecrementData() {
+            const selectedBeans = Array.from(document.querySelectorAll('input[name="beans"]:checked'))
+                .map(checkbox => checkbox.value);
+            const blendCount = parseInt(document.getElementById("blend-count").value) || 2;
+
+            
+            sessionStorage.setItem("blendedBeans", JSON.stringify(selectedBeans));
+            sessionStorage.setItem("blendedCount", blendCount);
+
+            window.location.href = "index.html";
+        }
+
+        populateBeanCheckboxes();
+        populateBlendTable();
+    </script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bean Demand Table</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-image: url('coffeebeans.jpeg'); 
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            background-color: rgba(255, 255, 255, 0.7); 
+            padding: 10px;
+            border-radius: 5px;
+            display: block; 
+            width: fit-content; 
+            margin: 20px auto; 
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #e8f5e9; 
+            font-weight: bold;
+            color: #333;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #c8e6c9; 
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            margin-bottom: 5px;
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 5px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100px;
+        }
+
+        .blend-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .blend-button:hover {
+            background-color: #45a049;
+        }
+
+        #blended-info {
+            margin-top: 20px;
+            text-align: center;
+            color: white; 
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); 
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body>
+    <h2>COFFEE BEAN INVENTORY MANAGEMANET</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Bean Type</th>
+                <th>Last Week Sales</th>
+                <th>Present Week Sales</th>
+                <th>Next Week Sales</th>
+                <th>Combined Demand</th>
+            </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+    </table>
+
+    <label for="batch-number">Select Batch Division Number:</label>
+    <input type="number" id="batch-number" value="1" min="1">
+
+    <button class="blend-button" onclick="blendBeans()">Go To Blending</button>
+
+    <div id="blended-info"></div>
+
+    <script>
+        let beanData = JSON.parse(sessionStorage.getItem("beanData")) || {
+            "Black Bean": { lastWeek: 50, presentWeek: 60, nextWeek: 40, combinedDemand: 90 },
+            "Kidney Bean": { lastWeek: 30, presentWeek: 55, nextWeek: 45, combinedDemand: 75 },
+            "Chickpea": { lastWeek: 70, presentWeek: 80, nextWeek: 60, combinedDemand: 130 },
+            "Lentil": { lastWeek: 40, presentWeek: 65, nextWeek: 50, combinedDemand: 90 },
+            "Pinto Bean": { lastWeek: 60, presentWeek: 70, nextWeek: 55, combinedDemand: 115 },
+            "Navy Bean": {lastWeek: 35, presentWeek: 42, nextWeek: 38, combinedDemand: 70},
+            "Cannellini Bean":{lastWeek: 45, presentWeek: 50, nextWeek: 48, combinedDemand: 98},
+            "Great Northern Bean":{lastWeek: 55, presentWeek: 62, nextWeek: 58, combinedDemand: 120},
+            "Cranberry Bean":{lastWeek: 28, presentWeek: 33, nextWeek: 30, combinedDemand: 63},
+            "Fava Bean":{lastWeek: 65, presentWeek: 72, nextWeek: 68, combinedDemand: 140}
+        };
+
+        function populateTable() {
+            let tableBody = document.getElementById("table-body");
+            tableBody.innerHTML = "";
+
+            Object.keys(beanData).forEach(bean => {
+                let { lastWeek, presentWeek, nextWeek, combinedDemand } = beanData[bean];
+
+                let row = `<tr>
+                    <td>${bean}</td>
+                    <td>${lastWeek}</td>
+                    <td>${presentWeek}</td>
+                    <td>${nextWeek}</td>
+                    <td>${combinedDemand}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+
+            sessionStorage.setItem("beanData", JSON.stringify(beanData));
+        }
+
+        function blendBeans() {
+            let batchNumber = parseFloat(document.getElementById("batch-number").value) || 1;
+            let selectedBeans = Object.keys(beanData).length;
+
+            sessionStorage.setItem("batchNumber", batchNumber);
+            sessionStorage.setItem("selectedBeans", selectedBeans);
+
+            window.location.href = "blend.html";
+        }
+
+        function decrementBeanData() {
+            const updatedBeanData = JSON.parse(sessionStorage.getItem("beanData")) || beanData;
+
+            beanData = updatedBeanData;
+
+            
+            const blendedBeans = JSON.parse(sessionStorage.getItem("blendedBeans"));
+            const blendedCount = parseInt(sessionStorage.getItem("blendedCount"));
+
+            if (blendedBeans && blendedCount) {
+                const blendedInfoDiv = document.getElementById("blended-info");
+                blendedInfoDiv.innerHTML = `<p>Blended ${blendedCount} units of ${blendedBeans.join(", ")}.</p>`;
+                sessionStorage.removeItem("blendedBeans");
+                sessionStorage.removeItem("blendedCount");
+            }
+
+            populateTable();
+        }
+
+        window.onload = function() {
+            populateTable();
+            decrementBeanData();
+        };
+    </script>
+</body>
+</html>
